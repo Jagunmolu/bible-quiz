@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Build/deploy local state
+.vercel
+.netlify
+node_modules/
+
+# Keep these (they ARE the site):
+#   index.html, quiz-data.js, logo.png, *.csv, build_quiz_data.py

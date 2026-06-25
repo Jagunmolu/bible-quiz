@@ -1,0 +1,23 @@
+# Netlify configuration for the Bible Quiz (static site, no build step).
+# The site is just static files, so we publish the folder as-is.
+
+[build]
+  publish = "."
+  command = ""
+
+# Cache the logo, but always revalidate the app + data so question updates
+# show up immediately after a redeploy.
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/quiz-data.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/logo.png"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"

@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bible Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     DESIGN TOKENS - derived from the Okota Baptist Church seal
+     (red cross, open Bible, black ring, gold for highlights)
+     ============================================================ */
+  :root{
+    --ink:        #0D0D0F;   /* near-black backdrop */
+    --charcoal:   #16161A;   /* panel surface */
+    --charcoal-2: #1F1F25;   /* raised surface */
+    --line:       #34343E;   /* hairline divider */
+    --red:        #C8242B;   /* church red (the cross) */
+    --red-deep:   #8E1A20;   /* pressed red */
+    --gold:       #C9A227;   /* Golden Rush / reveal accent */
+    --gold-soft:  #E6C65A;
+    --parchment:  #F4EFE2;   /* Bible-page cream, primary text on dark */
+    --parchment-dim:#B9B2A1;
+    --muted:      #7C7768;
+    --good:       #3F7A52;   /* answered / correct green */
+    --good-deep:  #2C5C3C;
+    --shadow:     0 18px 60px rgba(0,0,0,.55);
+    --display:    'Cormorant Garamond', Georgia, serif;
+    --body:       'Inter', system-ui, sans-serif;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--body);
+    background:
+      radial-gradient(1200px 800px at 50% -10%, #1c1c22 0%, var(--ink) 60%),
+      var(--ink);
+    color:var(--parchment);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+
+  .stage{
+    max-width:1180px;
+    margin:0 auto;
+    padding:clamp(16px,3vw,34px);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ---------- Masthead ---------- */
+  header.mast{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    padding-bottom:18px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:22px;
+  }
+  .seal{
+    width:62px;height:62px;border-radius:50%;
+    background:var(--parchment);
+    display:grid;place-items:center;
+    flex:0 0 auto;
+    box-shadow:0 0 0 2px var(--ink), 0 0 0 3px var(--gold);
+    overflow:hidden;
+  }
+  .seal img{width:100%;height:100%;object-fit:contain;padding:3px}
+  .mast-titles{flex:1 1 auto;min-width:0}
+  .eyebrow{
+    font-size:.66rem;letter-spacing:.32em;text-transform:uppercase;
+    color:var(--gold);font-weight:600;
+  }
+  .mast h1{
+    font-family:var(--display);
+    font-weight:700;
+    font-size:clamp(1.5rem,3.4vw,2.3rem);
+    line-height:1.02;
+    letter-spacing:.01em;
+  }
+  .mast h1 .book{color:var(--gold-soft)}
+  .mode-pill{
+    font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;
+    padding:5px 11px;border-radius:999px;font-weight:700;
+    border:1px solid var(--line);color:var(--parchment-dim);
+    white-space:nowrap;
+  }
+  .mode-pill.host{background:rgba(200,36,43,.12);border-color:var(--red);color:#ffd9da}
+  .mode-pill.proj{background:rgba(201,162,39,.12);border-color:var(--gold);color:var(--gold-soft)}
+
+  /* ---------- Control bar ---------- */
+  .controls{
+    display:flex;flex-wrap:wrap;align-items:center;gap:12px;
+    margin-bottom:24px;
+  }
+  .seg{
+    display:inline-flex;background:var(--charcoal);border:1px solid var(--line);
+    border-radius:11px;padding:4px;gap:2px;
+  }
+  .seg button{
+    font-family:var(--body);font-size:.82rem;font-weight:600;
+    color:var(--parchment-dim);background:transparent;border:0;cursor:pointer;
+    padding:9px 16px;border-radius:8px;transition:.16s;white-space:nowrap;
+  }
+  .seg button[aria-pressed="true"]{background:var(--charcoal-2);color:var(--parchment);box-shadow:inset 0 0 0 1px var(--line)}
+  .seg button:hover{color:var(--parchment)}
+
+  .cat-select{position:relative}
+  select#category{
+    appearance:none;font-family:var(--body);font-size:.9rem;font-weight:600;
+    color:var(--parchment);background:var(--charcoal);border:1px solid var(--line);
+    border-radius:11px;padding:11px 40px 11px 16px;cursor:pointer;min-width:230px;
+  }
+  .cat-select::after{
+    content:"";position:absolute;right:15px;top:50%;width:8px;height:8px;
+    border-right:2px solid var(--gold);border-bottom:2px solid var(--gold);
+    transform:translateY(-70%) rotate(45deg);pointer-events:none;
+  }
+
+  .spacer{flex:1 1 auto}
+
+  .ghost-btn{
+    font-family:var(--body);font-size:.78rem;font-weight:600;
+    color:var(--parchment-dim);background:transparent;
+    border:1px solid var(--line);border-radius:9px;padding:9px 14px;cursor:pointer;
+    transition:.16s;
+  }
+  .ghost-btn:hover{color:var(--parchment);border-color:var(--muted)}
+
+  /* progress count */
+  .progress{font-size:.78rem;color:var(--muted);font-weight:500}
+  .progress b{color:var(--parchment);font-weight:700}
+
+  /* ---------- Board (number grid) ---------- */
+  .board-wrap{flex:1 1 auto}
+  .cat-heading{
+    font-family:var(--display);font-style:italic;font-weight:600;
+    font-size:1.5rem;color:var(--parchment);margin-bottom:4px;
+  }
+  .cat-sub{font-size:.8rem;color:var(--muted);margin-bottom:20px}
+
+  .board{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(86px,1fr));
+    gap:12px;
+  }
+  .tile{
+    position:relative;aspect-ratio:1/1;border-radius:14px;cursor:pointer;
+    border:1px solid var(--line);
+    background:linear-gradient(180deg,var(--charcoal-2),var(--charcoal));
+    color:var(--parchment);
+    font-family:var(--display);font-weight:700;font-size:2rem;
+    display:grid;place-items:center;
+    transition:transform .12s, box-shadow .16s, border-color .16s, background .2s;
+  }
+  .tile:hover{transform:translateY(-2px);border-color:var(--gold);box-shadow:0 10px 24px rgba(0,0,0,.4)}
+  .tile:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+  .tile.used{
+    background:linear-gradient(180deg,var(--good),var(--good-deep));
+    border-color:var(--good);color:#dff0e3;cursor:default;
+  }
+  .tile.used::after{
+    content:"\2713";position:absolute;top:6px;right:9px;font-size:.8rem;
+    font-family:var(--body);opacity:.85;
+  }
+  .tile.used:hover{transform:none;box-shadow:none}
+  .tile .num{pointer-events:none}
+
+  /* Single instruction-card categories (Recitation) get one wide tile */
+  .board.single{grid-template-columns:1fr;max-width:520px}
+  .board.single .tile{
+    aspect-ratio:auto;padding:26px;font-family:var(--body);font-size:1rem;
+    font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--gold-soft);
+  }
+
+  /* ---------- Question view (overlay) ---------- */
+  .view{
+    position:fixed;inset:0;z-index:50;
+    background:
+      radial-gradient(1100px 700px at 50% 0%, #1a1a20 0%, var(--ink) 65%),
+      var(--ink);
+    display:none;flex-direction:column;
+    padding:clamp(20px,4vw,56px);
+    animation:fade .22s ease both;
+  }
+  .view.open{display:flex}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+
+  .view-top{
+    display:flex;align-items:center;gap:14px;margin-bottom:auto;
+  }
+  .qbadge{
+    font-family:var(--display);font-weight:700;font-size:1.1rem;color:var(--ink);
+    background:var(--gold);border-radius:9px;padding:5px 14px;letter-spacing:.02em;
+  }
+  .qcat{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--parchment-dim);font-weight:600}
+
+  .view-center{
+    margin:auto 0;max-width:1000px;width:100%;align-self:center;
+  }
+  .q-text{
+    font-family:var(--display);font-weight:600;
+    font-size:clamp(1.8rem,4.4vw,3.4rem);
+    line-height:1.18;color:var(--parchment);
+    white-space:pre-wrap;
+  }
+  .divider{
+    height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);
+    margin:clamp(22px,4vh,42px) 0;
+  }
+  .a-wrap{position:relative}
+  .a-label{
+    font-size:.72rem;letter-spacing:.24em;text-transform:uppercase;
+    color:var(--gold);font-weight:700;margin-bottom:10px;
+  }
+  .a-text{
+    font-family:var(--body);font-weight:600;
+    font-size:clamp(1.3rem,3.1vw,2.4rem);
+    line-height:1.3;color:var(--gold-soft);white-space:pre-wrap;
+  }
+  /* hidden state for projection */
+  .a-hidden .a-text,.a-hidden .a-label{filter:blur(18px);opacity:.25;user-select:none;transition:.3s}
+  .reveal-hint{
+    position:absolute;inset:0;display:grid;place-items:center;
+    font-family:var(--body);font-size:1rem;font-weight:600;color:var(--parchment-dim);
+    letter-spacing:.04em;
+  }
+  .a-hidden .reveal-hint{display:grid}
+  .a-wrap:not(.a-hidden) .reveal-hint{display:none}
+
+  .view-bottom{
+    margin-top:auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    padding-top:clamp(20px,4vh,40px);
+  }
+  .btn{
+    font-family:var(--body);font-size:.92rem;font-weight:700;cursor:pointer;
+    border-radius:11px;padding:14px 24px;border:1px solid transparent;transition:.16s;
+    letter-spacing:.01em;
+  }
+  .btn-gold{background:var(--gold);color:var(--ink)}
+  .btn-gold:hover{background:var(--gold-soft)}
+  .btn-red{background:var(--red);color:#fff}
+  .btn-red:hover{background:var(--red-deep)}
+  .btn-outline{background:transparent;color:var(--parchment-dim);border-color:var(--line)}
+  .btn-outline:hover{color:var(--parchment);border-color:var(--muted)}
+  .kbd{
+    font-size:.66rem;color:var(--muted);font-weight:600;letter-spacing:.04em;
+    border:1px solid var(--line);border-radius:5px;padding:2px 7px;margin-left:6px;
+  }
+
+  /* ---------- Timer ---------- */
+  .timer{
+    display:none;align-items:center;gap:14px;margin-left:6px;
+    font-variant-numeric:tabular-nums;
+  }
+  .timer.on{display:inline-flex}
+  .timer .ring{position:relative;width:84px;height:84px;flex:0 0 auto}
+  .timer svg{transform:rotate(-90deg)}
+  .timer .tnum{
+    position:absolute;inset:0;display:grid;place-items:center;
+    font-family:var(--display);font-weight:700;font-size:2.4rem;color:var(--parchment);
+    line-height:1;
+  }
+  .timer.warn .tnum{color:var(--gold-soft)}
+  .timer.warn #timer-arc{stroke:var(--gold)}
+  /* TIME-UP state: red ring, "TIME!" label, pulsing */
+  .timer.done .ring{animation:timepulse .9s ease-in-out infinite}
+  .timer.done #timer-arc{stroke:var(--red)}
+  .timer.done svg circle:first-child{stroke:var(--red-deep)}
+  .timer.done .tnum{font-size:1.35rem;color:#fff;letter-spacing:.04em;text-transform:uppercase}
+  @keyframes timepulse{
+    0%,100%{transform:scale(1);filter:drop-shadow(0 0 0 rgba(200,36,43,0))}
+    50%{transform:scale(1.08);filter:drop-shadow(0 0 14px rgba(200,36,43,.6))}
+  }
+  /* full-screen TIME! flash so the whole room sees it */
+  .time-flash{
+    position:fixed;inset:0;z-index:60;display:none;place-items:center;
+    background:rgba(142,26,32,.16);backdrop-filter:blur(2px);
+    animation:flashin .25s ease both;pointer-events:none;
+  }
+  .time-flash.show{display:grid}
+  .time-flash span{
+    font-family:var(--display);font-weight:700;font-size:clamp(4rem,16vw,12rem);
+    color:#fff;letter-spacing:.04em;text-shadow:0 0 40px rgba(200,36,43,.9);
+    animation:stamp .4s cubic-bezier(.2,1.4,.4,1) both;
+  }
+  @keyframes flashin{from{opacity:0}to{opacity:1}}
+  @keyframes stamp{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+
+  /* ---------- Footer / scoreboard (host only) ---------- */
+  .scorebar{
+    display:none;align-items:center;gap:18px;flex-wrap:wrap;
+    margin-top:24px;padding-top:18px;border-top:1px solid var(--line);
+  }
+  .scorebar.on{display:flex}
+  .scorebar .lbl{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .team{display:inline-flex;align-items:center;gap:8px;background:var(--charcoal);border:1px solid var(--line);border-radius:10px;padding:6px 8px 6px 14px}
+  .team .name{font-size:.85rem;font-weight:600;color:var(--parchment)}
+  .team .pts{font-family:var(--display);font-weight:700;font-size:1.3rem;color:var(--gold-soft);min-width:28px;text-align:center}
+  .team button{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:var(--charcoal-2);color:var(--parchment-dim);font-weight:700;cursor:pointer;font-size:1rem;line-height:1}
+  .team button:hover{color:var(--parchment);border-color:var(--muted)}
+
+  /* mobile niceties */
+  @media (max-width:560px){
+    .seg button{padding:8px 11px;font-size:.76rem}
+    select#category{min-width:0;width:100%}
+    .cat-select{flex:1 1 100%}
+    .q-text{font-size:1.7rem}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <header class="mast">
+    <div class="seal"><img id="seal-img" src="logo.png" alt="Okota Baptist Church seal" onerror="this.style.display='none'"></div>
+    <div class="mast-titles">
+      <div class="eyebrow" id="church-name">Okota Baptist Church</div>
+      <h1 id="quiz-title">Bible Quiz &mdash; <span class="book" id="book-name">Hebrews</span></h1>
+    </div>
+    <span class="mode-pill" id="mode-pill">Host</span>
+  </header>
+
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Mode">
+      <button id="mode-host" aria-pressed="true">Host view</button>
+      <button id="mode-proj" aria-pressed="false">Projection</button>
+    </div>
+    <div class="cat-select">
+      <select id="category" aria-label="Select category"></select>
+    </div>
+    <div class="spacer"></div>
+    <span class="progress" id="progress"></span>
+    <button class="ghost-btn" id="reset-cat" title="Mark all questions in this category unused again">Reset category</button>
+  </div>
+
+  <div class="board-wrap">
+    <h2 class="cat-heading" id="cat-heading"></h2>
+    <p class="cat-sub" id="cat-sub"></p>
+    <div class="board" id="board"></div>
+  </div>
+
+  <div class="scorebar" id="scorebar">
+    <span class="lbl">Scores</span>
+    <div id="teams"></div>
+    <button class="ghost-btn" id="add-team">+ Team</button>
+  </div>
+
+</div>
+
+<!-- ============ QUESTION VIEW OVERLAY ============ -->
+<div class="view" id="view">
+  <div class="view-top">
+    <span class="qbadge" id="q-badge">Q1</span>
+    <span class="qcat" id="q-cat"></span>
+    <div class="spacer" style="flex:1"></div>
+    <div class="timer" id="timer">
+      <div class="ring">
+        <svg width="84" height="84" viewBox="0 0 84 84"><circle cx="42" cy="42" r="38" stroke="#34343E" stroke-width="5" fill="none"></circle><circle id="timer-arc" cx="42" cy="42" r="38" stroke="#C9A227" stroke-width="5" fill="none" stroke-linecap="round"></circle></svg>
+        <span class="tnum" id="timer-num">7</span>
+      </div>
+      <button class="ghost-btn" id="timer-start">Start timer <span class="kbd">T</span></button>
+    </div>
+  </div>
+
+  <div class="view-center">
+    <div class="q-text" id="q-text"></div>
+    <div class="divider"></div>
+    <div class="a-wrap" id="a-wrap">
+      <div class="a-label">Answer</div>
+      <div class="a-text" id="a-text"></div>
+      <div class="reveal-hint">Tap “Reveal answer” when ready &nbsp;·&nbsp; <span class="kbd">Space</span></div>
+    </div>
+  </div>
+
+  <div class="view-bottom">
+    <button class="btn btn-red" id="back-btn">&larr; Back to board <span class="kbd">Esc</span></button>
+    <button class="btn btn-gold" id="reveal-btn">Reveal answer <span class="kbd">Space</span></button>
+    <div class="spacer" style="flex:1"></div>
+    <button class="btn btn-outline" id="mark-done-btn">Mark used &amp; return <span class="kbd">Enter</span></button>
+  </div>
+</div>
+
+<!-- full-screen TIME! flash (shown briefly when the timer hits zero) -->
+<div class="time-flash" id="time-flash"><span>TIME!</span></div>
+
+<script src="quiz-data.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- tiny helpers ---------- */
+  const $ = (s,r=document)=>r.querySelector(s);
+  const el=(t,c)=>{const n=document.createElement(t);if(c)n.className=c;return n;};
+  const escapeHTML = s => s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  // allow author line-breaks (\n) but nothing else
+  const fmt = s => escapeHTML(s).replace(/\n/g,'<br>');
+
+  /* ---------- state (persisted) ---------- */
+  const BOOK = (QUIZ_META.book||'quiz').toLowerCase().replace(/\s+/g,'-');
+  const SKEY = 'biblequiz:'+BOOK;          // used-questions + scores
+  let state = loadState();
+  function loadState(){
+    try{const s=JSON.parse(sessionStorage.getItem(SKEY));if(s)return s;}catch(e){}
+    return {used:{}, scores:[], mode:'proj'};   // safe default: Projection
+  }
+  function save(){ try{sessionStorage.setItem(SKEY,JSON.stringify(state));}catch(e){} }
+
+  /* ---------- header text ---------- */
+  $('#church-name').textContent = QUIZ_META.church || '';
+  $('#book-name').textContent   = QUIZ_META.book || '';
+  $('#quiz-title').childNodes[0].textContent = (QUIZ_META.title||'Bible Quiz')+' \u2014 ';
+  document.title = (QUIZ_META.title||'Bible Quiz')+' \u2014 '+(QUIZ_META.book||'');
+
+  /* ---------- category dropdown ---------- */
+  const catSel = $('#category');
+  CATEGORIES.forEach(c=>{
+    const o=el('option'); o.value=c.id; o.textContent=c.label; catSel.appendChild(o);
+  });
+  let curCat = CATEGORIES[0];
+  catSel.addEventListener('change',()=>{
+    curCat = CATEGORIES.find(c=>c.id===catSel.value);
+    renderBoard();
+  });
+
+  /* ---------- mode toggle ---------- */
+  const modeHost=$('#mode-host'), modeProj=$('#mode-proj'), modePill=$('#mode-pill');
+  function setMode(m){
+    state.mode=m; save();
+    const host = m==='host';
+    modeHost.setAttribute('aria-pressed',host);
+    modeProj.setAttribute('aria-pressed',!host);
+    modePill.textContent = host?'Host':'Projection';
+    modePill.className = 'mode-pill '+(host?'host':'proj');
+    $('#scorebar').classList.toggle('on', host);     // scoreboard host-only
+    // re-apply answer visibility if a question is open
+    if(viewOpen) applyAnswerVisibility();
+  }
+
+  /* Host view is password-gated so answers can't be projected by accident.
+     Switching TO Projection is always free. The password lives in QUIZ_META
+     (or defaults below). NOTE: a static page can't keep a true secret - this
+     guards against accidental projection, not a determined source-reader. */
+  const HOST_PW = (QUIZ_META.hostPassword || 'okota');
+  let hostUnlocked = (state.mode==='host'); // if we reload in host mode, stay unlocked for the session
+  function requestHost(){
+    if(hostUnlocked){ setMode('host'); return; }
+    const entry = prompt('Enter the moderator password to open Host view\n(answers will be visible \u2014 don\u2019t project this screen):');
+    if(entry===null) return;                 // cancelled -> stay where we are
+    if(entry===HOST_PW){
+      hostUnlocked=true; setMode('host');
+    }else{
+      alert('Incorrect password. Staying in Projection view.');
+      setMode('proj');
+    }
+  }
+  modeHost.addEventListener('click',requestHost);
+  modeProj.addEventListener('click',()=>setMode('proj'));
+
+  /* ---------- board ---------- */
+  const board=$('#board');
+  function usedSet(catId){ return state.used[catId] || (state.used[catId]=[]); }
+  function renderBoard(){
+    $('#cat-heading').textContent = curCat.label;
+    board.innerHTML='';
+    const used = usedSet(curCat.id);
+
+    if(curCat.isInstruction){
+      board.classList.add('single');
+      $('#cat-sub').textContent = 'Tap to show the round instructions on screen.';
+      const t=el('button','tile'); t.innerHTML='<span class="num">View round instructions</span>';
+      t.addEventListener('click',()=>openQuestion(0));
+      board.appendChild(t);
+    }else{
+      board.classList.remove('single');
+      $('#cat-sub').textContent = curCat.items.length+' questions \u00b7 green = already used';
+      curCat.items.forEach((q,i)=>{
+        const t=el('button','tile'+(used.includes(i)?' used':''));
+        t.innerHTML='<span class="num">'+(i+1)+'</span>';
+        t.setAttribute('aria-label','Question '+(i+1)+(used.includes(i)?' (used)':''));
+        t.addEventListener('click',()=>openQuestion(i));
+        board.appendChild(t);
+      });
+    }
+    updateProgress();
+  }
+  function updateProgress(){
+    if(curCat.isInstruction){$('#progress').textContent='';return;}
+    const used=usedSet(curCat.id).length, total=curCat.items.length;
+    $('#progress').innerHTML='<b>'+used+'</b> / '+total+' used';
+  }
+
+  $('#reset-cat').addEventListener('click',()=>{
+    if(curCat.isInstruction) return;
+    if(confirm('Mark all '+curCat.items.length+' questions in “'+curCat.label+'” as unused?')){
+      state.used[curCat.id]=[]; save(); renderBoard();
+    }
+  });
+
+  /* ---------- question view ---------- */
+  const view=$('#view'); let viewOpen=false; let curIdx=-1;
+  const aWrap=$('#a-wrap');
+
+  function openQuestion(i){
+    curIdx=i;
+    const item=curCat.items[i];
+    $('#q-badge').textContent = curCat.isInstruction ? '\u2731' : ('Q'+(i+1));
+    $('#q-cat').textContent = curCat.label;
+    $('#q-text').innerHTML = fmt(item.q);
+    $('#a-text').innerHTML = fmt(item.a);
+    // instruction cards: show the "answer" (the rules) immediately, hide the Reveal button
+    const isInstr = !!curCat.isInstruction;
+    $('#reveal-btn').style.display = isInstr ? 'none' : '';
+    $('#a-wrap').querySelector('.a-label').textContent = isInstr ? 'Instructions' : 'Answer';
+    resetTimer();
+    $('#timer').classList.toggle('on', !isInstr && curCat.id==='recitation' ? false : false); // timer is opt-in; shown below
+    // Timer available on every question, started manually:
+    $('#timer').classList.add('on');
+    if(isInstr) $('#timer').classList.remove('on');
+    view.classList.add('open'); viewOpen=true;
+    applyAnswerVisibility(isInstr);
+    $('#back-btn').focus();
+  }
+  function applyAnswerVisibility(forceShow){
+    const isInstr = !!curCat.isInstruction || forceShow===true;
+    // Host always sees the answer. Projection hides until revealed. Instructions always show.
+    if(state.mode==='host' || isInstr){
+      aWrap.classList.remove('a-hidden');
+      $('#reveal-btn').textContent='Reveal answer';
+    }else{
+      aWrap.classList.add('a-hidden');
+    }
+  }
+  function reveal(){
+    aWrap.classList.remove('a-hidden');
+  }
+  function closeView(){
+    view.classList.remove('open'); viewOpen=false; stopTimer();
+  }
+  function markUsedAndReturn(){
+    if(!curCat.isInstruction){
+      const u=usedSet(curCat.id);
+      if(!u.includes(curIdx)){u.push(curIdx);save();}
+    }
+    closeView(); renderBoard();
+  }
+
+  $('#back-btn').addEventListener('click',closeView);
+  $('#reveal-btn').addEventListener('click',reveal);
+  $('#mark-done-btn').addEventListener('click',markUsedAndReturn);
+  // click on the blurred answer also reveals (projection convenience)
+  aWrap.addEventListener('click',()=>{ if(aWrap.classList.contains('a-hidden')) reveal(); });
+
+  /* ---------- timer (manual start, default 5s, click to +5) ---------- */
+  const TIMER_DEFAULT=7;
+  let tRemain=TIMER_DEFAULT, tInt=null, tTotal=TIMER_DEFAULT;
+  const arc=$('#timer-arc'); const CIRC=2*Math.PI*38;   // r=38 now
+  const timerEl=$('#timer');
+  arc.style.strokeDasharray=CIRC;
+  function paintTimer(){
+    $('#timer-num').textContent=tRemain;
+    arc.style.strokeDashoffset = CIRC*(1 - tRemain/tTotal);
+    timerEl.classList.toggle('warn', tRemain<=2 && tRemain>0);
+  }
+  function resetTimer(){
+    stopTimer(); tRemain=TIMER_DEFAULT; tTotal=TIMER_DEFAULT;
+    timerEl.classList.remove('done','warn');
+    arc.style.strokeDasharray=CIRC;
+    paintTimer(); $('#timer-start').textContent='Start timer';
+  }
+  function stopTimer(){ if(tInt){clearInterval(tInt);tInt=null;} }
+  function startTimer(){
+    if(timerEl.classList.contains('done')){ resetTimer(); }   // restart after time-up
+    if(tInt){ // running -> add 5 seconds
+      tRemain+=5; tTotal=Math.max(tTotal,tRemain);
+      timerEl.classList.remove('warn'); paintTimer(); return;
+    }
+    if(tRemain<=0){tRemain=TIMER_DEFAULT;tTotal=TIMER_DEFAULT;}
+    timerEl.classList.remove('done');
+    paintTimer(); $('#timer-start').textContent='+5 seconds';
+    tInt=setInterval(()=>{
+      tRemain--; paintTimer();
+      if(tRemain<=0){ stopTimer(); tRemain=0; timeUp(); }
+    },1000);
+  }
+  function timeUp(){
+    timerEl.classList.remove('warn');
+    timerEl.classList.add('done');
+    $('#timer-num').textContent='Time';
+    arc.style.strokeDashoffset=0;            // full red ring
+    $('#timer-start').textContent='Restart timer';
+    // brief full-screen flash so the whole room registers it
+    const fl=$('#time-flash');
+    fl.classList.add('show');
+    setTimeout(()=>fl.classList.remove('show'),1100);
+  }
+  $('#timer-start').addEventListener('click',startTimer);
+
+  /* ---------- scoreboard (host) ---------- */
+  const teamsWrap=$('#teams');
+  function renderTeams(){
+    teamsWrap.innerHTML='';
+    state.scores.forEach((tm,idx)=>{
+      const d=el('div','team');
+      d.innerHTML='<span class="name"></span>'+
+        '<button data-d="-1" aria-label="minus">\u2212</button>'+
+        '<span class="pts">'+tm.pts+'</span>'+
+        '<button data-d="1" aria-label="plus">+</button>';
+      d.querySelector('.name').textContent=tm.name;
+      d.querySelector('.name').title='Click to rename';
+      d.querySelector('.name').style.cursor='pointer';
+      d.querySelector('.name').addEventListener('click',()=>{
+        const nn=prompt('Team name:',tm.name); if(nn){tm.name=nn;save();renderTeams();}
+      });
+      d.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+        tm.pts=Math.max(0,tm.pts+parseInt(b.dataset.d,10)*1); // 5-mark steps to match rounds
+        save();renderTeams();
+      }));
+      teamsWrap.appendChild(d);
+    });
+  }
+  $('#add-team').addEventListener('click',()=>{
+    const n=prompt('Team / contestant name:','Team '+(state.scores.length+1));
+    if(n){state.scores.push({name:n,pts:0});save();renderTeams();}
+  });
+
+  /* ---------- keyboard shortcuts ---------- */
+  document.addEventListener('keydown',(e)=>{
+    if(!viewOpen) return;
+    if(e.key==='Escape'){e.preventDefault();closeView();}
+    else if(e.key===' '){e.preventDefault(); if(!curCat.isInstruction) reveal();}
+    else if(e.key==='Enter'){e.preventDefault();markUsedAndReturn();}
+    else if(e.key==='t'||e.key==='T'){e.preventDefault(); if(!curCat.isInstruction) startTimer();}
+  });
+
+  /* ---------- boot ---------- */
+  renderTeams();
+  // Safety default: start in Projection unless Host was already unlocked this session.
+  setMode(hostUnlocked ? 'host' : 'proj');
+  renderBoard();
+})();
+</script>
+</body>
+</html>
