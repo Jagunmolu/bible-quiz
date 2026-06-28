@@ -6,7 +6,7 @@
    ============================================================ */
 
 const QUIZ_META = {
-  book:    "Acts  1 14 Reviewed",
+  book:    "Acts 1 - 14",
   version: "NIV",
   church:  "Okota Baptist Church",
   title:   "Acts 1 - 14",
