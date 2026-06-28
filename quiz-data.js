@@ -9,7 +9,7 @@ const QUIZ_META = {
   book:    "Acts  1 14 Reviewed",
   version: "NIV",
   church:  "Okota Baptist Church",
-  title:   "Bible Quiz",
+  title:   "Acts 1 - 14",
   hostPassword: "okota",  // password to open Host view
 };
 
